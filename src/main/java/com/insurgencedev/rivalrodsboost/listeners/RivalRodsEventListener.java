@@ -1,6 +1,7 @@
 package com.insurgencedev.rivalrodsboost.listeners;
 
 import me.rivaldev.fishingrod.rivalfishingrods.api.RodEssenceReceiveEvent;
+import me.rivaldev.fishingrod.rivalfishingrods.api.RodXPGainEvent;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -17,7 +18,21 @@ public final class RivalRodsEventListener implements Listener {
 
     @EventHandler(ignoreCancelled = true)
     public void onReceive(RodEssenceReceiveEvent event) {
-        Player player = event.getPlayer();
+        double total = getTotal(event.getPlayer(), event.getEssence(), "Essence");
+        if (total > 0) {
+            event.setEssence(total);
+        }
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void onGain(RodXPGainEvent event) {
+        double total = getTotal(event.getPlayer(), event.getXP(), "Rod Xp");
+        if (total > 0) {
+            event.setXP(total);
+        }
+    }
+
+    private double getTotal(Player player, double amount, String type) {
         IPlayer cache = ISetsAPI.getCache(player);
         double totalAmount = 0;
 
@@ -49,16 +64,15 @@ public final class RivalRodsEventListener implements Listener {
             }
 
             for (Boost boost : upgrade.getBoosts()) {
-                if (boost.getNamespace().equals("RIVAL_RODS") && boost.getType().equals("Essence")) {
+                if (boost.getNamespace().equals("RIVAL_RODS") && boost.getType().equals(type)) {
                     double boostAmount = boost.getBOOST_SETTINGS().getDouble("Boost_Amount");
-                    totalAmount += calcAmount(event.getEssence(), boost.isPercent(), boostAmount);
+                    totalAmount += calcAmount(amount, boost.isPercent(), boostAmount);
                 }
             }
+
         }
 
-        if (totalAmount > 0) {
-            event.setEssence(totalAmount);
-        }
+        return totalAmount;
     }
 
     private double calcAmount(double amountFromEvent, boolean isPercent, double boostAmount) {
